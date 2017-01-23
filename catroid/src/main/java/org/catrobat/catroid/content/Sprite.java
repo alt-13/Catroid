@@ -93,6 +93,7 @@ public class Sprite implements Serializable, Cloneable {
 	private List<Script> scriptList = new ArrayList<>();
 	private List<LookData> lookList = new ArrayList<>();
 	private List<SoundInfo> soundList = new ArrayList<>();
+	private List<LegoData> legoList = new ArrayList<>();
 	private List<UserBrick> userBricks = new ArrayList<>();
 	private List<NfcTagData> nfcTagList = new ArrayList<>();
 	private transient ActionFactory actionFactory = new ActionFactory();
@@ -516,6 +517,14 @@ public class Sprite implements Serializable, Cloneable {
 			cloneSoundList.add(element.clone());
 		}
 		cloneSprite.soundList = cloneSoundList;
+	}
+
+	private void cloneLego(Sprite cloneSprite) {
+		List<LegoData> cloneLegoList = new ArrayList<>();
+		for (LegoData element : this.legoList) {
+			cloneLegoList.add(element.clone());
+		}
+		cloneSprite.legoList = cloneLegoList;
 	}
 
 	private void cloneUserBricks(Sprite cloneSprite) {

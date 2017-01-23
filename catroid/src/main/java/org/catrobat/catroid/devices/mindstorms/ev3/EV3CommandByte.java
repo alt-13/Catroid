@@ -100,7 +100,7 @@ public class EV3CommandByte {
 	}
 
 	public enum EV3CommandOpCode {
-		OP_UI_READ(0x81), OP_UI_WRITE(0x82),
+		OP_UI_READ(0x81), OP_UI_WRITE(0x82), OP_UI_DRAW(0x84),
 
 		OP_KEEP_ALIVE(0x90),
 

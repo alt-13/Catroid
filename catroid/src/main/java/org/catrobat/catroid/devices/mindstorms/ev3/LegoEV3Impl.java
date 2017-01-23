@@ -244,6 +244,39 @@ public class LegoEV3Impl implements LegoEV3, EV3SensorService.OnSensorChangedLis
 		}
 	}
 
+	public void showImage(byte[] outputField) { // TODO: UX additional parameters background/foreground color, position
+		EV3Command command = new EV3Command(mindstormsConnection.getCommandCounter(), EV3CommandType.DIRECT_COMMAND_NO_REPLY, 0, 0, EV3CommandOpCode.OP_UI_DRAW);
+		mindstormsConnection.incCommandCounter();
+		byte[] showCommandHeader = {
+			(byte) 0x13, // LC0(FILLWINDOW)
+			(byte) 0x00, // LC0(BG_COLOR)
+			(byte) 0x82, (byte) 0x00, (byte) 0x00, // LC2(0) Start y
+			(byte) 0x82, (byte) 0x00, (byte) 0x00, // LC2(0) End y
+			(byte) 0x84, // opUI_DRAW Opcode
+			(byte) 0x1C, // LC0(BMPFILE)
+			(byte) 0x01, // LC0(FG_COLOR)
+			(byte) 0x82, (byte) 0x00, (byte) 0x00, // LC2(0) Start x-coordinate
+			(byte) 0x82, (byte) 0x32, (byte) 0x00, // LC2(50) Start y-coordinate
+			(byte) 0x84 // LCS
+		};
+		command.append(showCommandHeader);
+		byte[] folder = {(byte) 0x75, (byte) 0x69, (byte) 0x2F}; // ui/
+		command.append(folder);
+		// Filename
+		command.append(outputField);
+		// 0 termination of string | opUI_DRAW Opcode | LC(UPDATE)
+		byte[] showCommandFooter = {(byte) 0x00, (byte) 0x84, (byte) 0x00};
+		command.append(showCommandFooter);
+
+		Log.d("ALT_Debug", "Command: " + command.toHexString(command));
+
+		try {
+			mindstormsConnection.send(command);
+		} catch (MindstormsException e) {
+			Log.e(TAG, e.getMessage());
+		}
+	}
+
 	public void setLed(int ledStatus) {
 
 		EV3Command command = new EV3Command(mindstormsConnection.getCommandCounter(), EV3CommandType.DIRECT_COMMAND_NO_REPLY, 0, 0, EV3CommandOpCode.OP_UI_WRITE);

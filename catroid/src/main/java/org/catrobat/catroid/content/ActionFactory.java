@@ -85,6 +85,7 @@ import org.catrobat.catroid.content.actions.LegoEv3MotorStopAction;
 import org.catrobat.catroid.content.actions.LegoEv3MotorTurnAngleAction;
 import org.catrobat.catroid.content.actions.LegoEv3PlayToneAction;
 import org.catrobat.catroid.content.actions.LegoEv3SetLedAction;
+import org.catrobat.catroid.content.actions.LegoEv3ShowImageAction;
 import org.catrobat.catroid.content.actions.LegoNxtMotorMoveAction;
 import org.catrobat.catroid.content.actions.LegoNxtMotorStopAction;
 import org.catrobat.catroid.content.actions.LegoNxtMotorTurnAngleAction;
@@ -147,6 +148,7 @@ import org.catrobat.catroid.content.bricks.LegoEv3MotorMoveBrick;
 import org.catrobat.catroid.content.bricks.LegoEv3MotorStopBrick;
 import org.catrobat.catroid.content.bricks.LegoEv3MotorTurnAngleBrick;
 import org.catrobat.catroid.content.bricks.LegoEv3SetLedBrick;
+import org.catrobat.catroid.content.bricks.LegoEv3ShowImageBrick;
 import org.catrobat.catroid.content.bricks.LegoNxtMotorMoveBrick;
 import org.catrobat.catroid.content.bricks.LegoNxtMotorStopBrick;
 import org.catrobat.catroid.content.bricks.LegoNxtMotorTurnAngleBrick;
@@ -413,6 +415,12 @@ public class ActionFactory extends Actions {
 		action.setMotorEnum(motorEnum);
 		action.setSprite(sprite);
 		action.setDegrees(degrees);
+		return action;
+	}
+
+	public Action createLegoEv3ShowImageAction(String fileName) {
+		LegoEv3ShowImageAction action = action(LegoEv3ShowImageAction.class);
+		action.setFileName(fileName);
 		return action;
 	}
 
