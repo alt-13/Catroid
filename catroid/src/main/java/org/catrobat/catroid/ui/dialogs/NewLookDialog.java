@@ -129,7 +129,11 @@ public class NewLookDialog extends DialogFragment {
 
 			@Override
 			public void onClick(View view) {
-				fragment.addLookChooseImage();
+				if (SettingsActivity.isMindstormsEV3SharedPreferenceEnabled(getActivity())) {
+					fragment.addLookChooseImage(Intent.ACTION_GET_CONTENT, "*/*");
+				} else {
+					fragment.addLookChooseImage(Intent.ACTION_PICK, "image/*");
+				}
 				NewLookDialog.this.dismiss();
 			}
 		});

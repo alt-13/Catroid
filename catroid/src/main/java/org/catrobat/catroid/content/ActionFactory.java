@@ -85,6 +85,7 @@ import org.catrobat.catroid.content.actions.LegoEv3MotorStopAction;
 import org.catrobat.catroid.content.actions.LegoEv3MotorTurnAngleAction;
 import org.catrobat.catroid.content.actions.LegoEv3PlayToneAction;
 import org.catrobat.catroid.content.actions.LegoEv3SetLedAction;
+import org.catrobat.catroid.content.actions.LegoEv3ShowImageAction;
 import org.catrobat.catroid.content.actions.LegoNxtMotorMoveAction;
 import org.catrobat.catroid.content.actions.LegoNxtMotorStopAction;
 import org.catrobat.catroid.content.actions.LegoNxtMotorTurnAngleAction;
@@ -585,6 +586,13 @@ public class ActionFactory extends Actions {
 	public Action createSetLookAction(Sprite sprite, LookData lookData, boolean wait) {
 		SetLookAction action = (SetLookAction) createSetLookAction(sprite, lookData);
 		action.setWait(wait);
+		return action;
+	}
+
+	public Action createLegoEv3ShowImageAction(Sprite sprite, LookData lookData) {
+		LegoEv3ShowImageAction action = Actions.action(LegoEv3ShowImageAction.class);
+		action.setLookData(lookData);
+		action.setSprite(sprite);
 		return action;
 	}
 

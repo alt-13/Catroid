@@ -20,67 +20,51 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.catrobat.catroid.content.actions;
+package org.catrobat.catroid.content.bricks;
 
-import com.badlogic.gdx.scenes.scene2d.Action;
-
+import com.badlogic.gdx.scenes.scene2d.actions.SequenceAction;
+import org.catrobat.catroid.ProjectManager;
 import org.catrobat.catroid.common.LookData;
-import org.catrobat.catroid.content.BackgroundWaitHandler;
 import org.catrobat.catroid.content.Sprite;
 
-public class SetLookAction extends Action {
+import java.util.Collections;
+import java.util.List;
 
-	protected LookData look;
-	protected Sprite sprite;
+public class LegoEv3ShowImageBrick extends SetLookBrick {
 
-	protected boolean wait = false;
-	protected boolean setLookDone = false;
-	protected boolean scriptsAreCompleted = false;
-
-	protected void doLookUpdate() {
-		if (wait) {
-			BackgroundWaitHandler.addObserver(look, this);
-		}
-		if (look != null && sprite != null && sprite.getLookDataList().contains(look)) {
-			sprite.look.setLookData(look);
-			setLookDone = true;
-		}
+	public LegoEv3ShowImageBrick() {
+		lego = true;
 	}
 
 	@Override
-	public boolean act(float delta) {
-		if (!setLookDone) {
-			doLookUpdate();
-		}
-
-		if (wait) {
-			return scriptsAreCompleted;
-		} else {
-			return true;
-		}
+	public int getRequiredResources() {
+		return BLUETOOTH_LEGO_EV3;
 	}
 
 	@Override
-	public void restart() {
-		setLookDone = false;
-		if (wait) {
-			scriptsAreCompleted = false;
+	protected Sprite getSprite() {
+		return ProjectManager.getInstance().getCurrentScene().getSpriteList().get(0);
+	}
+
+	@Override
+	public Brick clone() {
+		LegoEv3ShowImageBrick clonedBrick = new LegoEv3ShowImageBrick();
+		clonedBrick.setLook(look);
+		return clonedBrick;
+	}
+
+	@Override
+	public List<SequenceAction> addActionToSequence(Sprite sprite, SequenceAction sequence) {
+		convertLookToRgf(look);
+		sequence.addAction(sprite.getActionFactory().createLegoEv3ShowImageAction(sprite, look));
+		return Collections.emptyList();
+	}
+
+	private void convertLookToRgf(LookData look) {
+		String absPath = look.getAbsolutePath();
+		if(absPath.substring(absPath.lastIndexOf(".")+1, absPath.length()).equals("rgf")) {
+			return;
 		}
-	}
-
-	public void setLookData(LookData look) {
-		this.look = look;
-	}
-
-	public void setSprite(Sprite sprite) {
-		this.sprite = sprite;
-	}
-
-	public void setWait(boolean wait) {
-		this.wait = wait;
-	}
-
-	public void notifyScriptsCompleted() {
-		scriptsAreCompleted = true;
+		// TODO: Actual conversion
 	}
 }

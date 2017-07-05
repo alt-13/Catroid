@@ -24,6 +24,7 @@
 package org.catrobat.catroid.devices.mindstorms.ev3;
 
 import android.content.Context;
+import android.net.Uri;
 import android.util.Log;
 
 import org.catrobat.catroid.bluetooth.base.BluetoothConnection;
@@ -35,10 +36,17 @@ import org.catrobat.catroid.devices.mindstorms.MindstormsSensor;
 import org.catrobat.catroid.devices.mindstorms.ev3.EV3CommandByte.EV3CommandByteCode;
 import org.catrobat.catroid.devices.mindstorms.ev3.EV3CommandByte.EV3CommandOpCode;
 import org.catrobat.catroid.devices.mindstorms.ev3.EV3CommandByte.EV3CommandParamFormat;
+import org.catrobat.catroid.devices.mindstorms.ev3.EV3CommandByte.EV3CommandParamByteCode;
 import org.catrobat.catroid.devices.mindstorms.ev3.sensors.EV3Sensor;
 import org.catrobat.catroid.devices.mindstorms.ev3.sensors.EV3SensorService;
 import org.catrobat.catroid.formulaeditor.Sensors;
+import org.catrobat.catroid.utils.Utils;
 
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.UUID;
 
 public class LegoEV3Impl implements LegoEV3, EV3SensorService.OnSensorChangedListener {
@@ -50,6 +58,8 @@ public class LegoEV3Impl implements LegoEV3, EV3SensorService.OnSensorChangedLis
 
 	private static final int NUMBER_VOLUME_LEVELS = 13;
 	private static final int VOLUME_LEVEL_INCR = 8;
+
+	private static final int MAX_BYTES_TO_SEND = 1000;
 
 	private boolean isInitialized = false;
 
@@ -244,6 +254,133 @@ public class LegoEV3Impl implements LegoEV3, EV3SensorService.OnSensorChangedLis
 		}
 	}
 
+	@Override
+	public String downloadFileToEv3(String fileNameWithPath) {
+		File file = new File(Uri.parse(fileNameWithPath).getPath());
+		byte[] payload = {};
+		try { // TODO: big file -> out of mem?
+			if (file.length() > MAX_LEGO_FILE_SIZE) {
+				throw new IOException("File too big");
+			}
+			payload = new byte[(int) file.length()];
+			BufferedInputStream bufferIS = new BufferedInputStream(new FileInputStream(file));
+			DataInputStream dataIS = new DataInputStream(bufferIS);
+			dataIS.readFully(payload);
+		} catch (IOException e) {
+			Log.e(TAG, e.getMessage());
+		}
+		return downloadFileToEv3(EV3_IMAGE_NAME, payload);
+	}
+
+	@Override
+	public String downloadFileToEv3(String fileName, byte[] content) {
+		String folder = "../prjs/" + Utils.getCurrentProjectName(this.context) + "/";
+		int bytesSent = 0;
+		int bytesToSend = content.length;
+		try {
+			byte handleToFile = beginDownload(bytesToSend, (folder + fileName));
+			while (bytesSent < bytesToSend) {
+				if ((bytesToSend - bytesSent) >= MAX_BYTES_TO_SEND) {
+					continueDownload(handleToFile, content, bytesSent, MAX_BYTES_TO_SEND);
+					bytesSent += MAX_BYTES_TO_SEND;
+				}
+				else {
+					continueDownload(handleToFile, content, bytesSent, (bytesToSend - bytesSent));
+					bytesSent = bytesSent + (bytesToSend - bytesSent);
+				}
+			}
+		} catch (MindstormsException e) {
+			Log.e(TAG, e.getMessage());
+		}
+		return fileName;
+	}
+
+	private byte beginDownload(int fileLength, String fileName) {
+		int commandCount = mindstormsConnection.getCommandCounter();
+
+		EV3Command command = new EV3Command(mindstormsConnection.getCommandCounter(),
+				EV3CommandType.SYSTEM_COMMAND_REPLY, EV3CommandOpCode.OP_BEGIN_DOWNLOAD);
+		mindstormsConnection.incCommandCounter();
+		command.append(fileLength);
+		command.append(fileName.getBytes());
+		command.append(EV3CommandByte.EV3CommandParamByteCode.PARAM_FOLLOW_TERMINATED.getByte());
+
+		EV3Reply reply = new EV3Reply(mindstormsConnection.sendAndReceive(command));
+		if (!reply.isValid(commandCount)) {
+			throw new MindstormsException("Reply not valid or error occurred!");
+		}
+		return reply.getByte(reply.getLength()-1);
+	}
+
+	private void continueDownload(byte handleToFile, byte[] payload, int offset, int length) {
+		int commandCount = mindstormsConnection.getCommandCounter();
+
+		EV3Command command = new EV3Command(mindstormsConnection.getCommandCounter(),
+				EV3CommandType.SYSTEM_COMMAND_REPLY, EV3CommandOpCode.OP_CONTINUE_DOWNLOAD);
+		mindstormsConnection.incCommandCounter();
+		command.append(handleToFile);
+		command.append(payload, offset, length);
+
+		EV3Reply reply = new EV3Reply(mindstormsConnection.sendAndReceive(command));
+
+		if (!reply.isValid(commandCount)) {
+			throw new MindstormsException("Reply not valid or error occurred!");
+		}
+	}
+
+	@Override
+	public void startProgram(String programName) {
+		String folder = "../prjs/" + Utils.getCurrentProjectName(this.context) + "/";
+
+		EV3Command command = new EV3Command(mindstormsConnection.getCommandCounter(), EV3CommandType.DIRECT_COMMAND_NO_REPLY, 8, 0, EV3CommandOpCode.OP_FILE);
+		mindstormsConnection.incCommandCounter();
+
+		command.append(EV3CommandParamFormat.PARAM_FORMAT_SHORT, 8); // LC0(LOAD_IMAGE)
+		command.append(EV3CommandParamByteCode.PARAM_FOLLOW_TWO_BYTE, 1); // LC2(USER_SLOT)
+		command.append(folder + programName);
+		command.append(EV3CommandByte.EV3CommandVariableScope.PARAM_VARIABLE_SCOPE_GLOBAL, 0);
+		command.append(EV3CommandByte.EV3CommandVariableScope.PARAM_VARIABLE_SCOPE_GLOBAL, 4);
+		command.append(EV3CommandOpCode.OP_PROGRAM_START.getByte());
+		command.append(EV3CommandParamFormat.PARAM_FORMAT_SHORT, 1); // LC0(USER_SLOT)
+		command.append(EV3CommandByte.EV3CommandVariableScope.PARAM_VARIABLE_SCOPE_GLOBAL, 0);
+		command.append(EV3CommandByte.EV3CommandVariableScope.PARAM_VARIABLE_SCOPE_GLOBAL, 4);
+		command.append(EV3CommandParamFormat.PARAM_FORMAT_SHORT, 0);
+
+		try {
+			mindstormsConnection.send(command);
+		} catch (MindstormsException e) {
+			Log.e(TAG, e.getMessage());
+		}
+	}
+
+	@Override
+	public void showImage(String fileName) { // TODO: UX additional parameters background/foreground color, position
+		String folder = "../prjs/" + Utils.getCurrentProjectName(this.context) + "/";
+
+		EV3Command command = new EV3Command(mindstormsConnection.getCommandCounter(), EV3CommandType.DIRECT_COMMAND_NO_REPLY, 0, 0, EV3CommandOpCode.OP_UI_DRAW);
+		mindstormsConnection.incCommandCounter();
+
+		command.append(EV3CommandByteCode.UI_DRAW_FILLWINDOW);
+		command.append(EV3CommandByteCode.BG_COLOR);
+		command.append(EV3CommandParamFormat.PARAM_FORMAT_LONG, 0); // LC2(0) Start y
+		command.append(EV3CommandParamFormat.PARAM_FORMAT_LONG, 0); // LC2(0) End y
+		command.append(EV3CommandOpCode.OP_UI_DRAW.getByte());
+		command.append(EV3CommandByteCode.UI_DRAW_BMPFILE);
+		command.append(EV3CommandByteCode.FG_COLOR);
+		command.append(EV3CommandParamFormat.PARAM_FORMAT_LONG, 0); // LC2(0) Start x-coordinate
+		command.append(EV3CommandParamFormat.PARAM_FORMAT_LONG, 0); // LC2(50) Start y-coordinate
+		command.append(folder + fileName);
+		command.append(EV3CommandOpCode.OP_UI_DRAW.getByte());
+		command.append(EV3CommandParamFormat.PARAM_FORMAT_SHORT, 0); // LC(UPDATE)
+
+		try {
+			mindstormsConnection.send(command);
+		} catch (MindstormsException e) {
+			Log.e(TAG, e.getMessage());
+		}
+	}
+
+	@Override
 	public void setLed(int ledStatus) {
 
 		EV3Command command = new EV3Command(mindstormsConnection.getCommandCounter(), EV3CommandType.DIRECT_COMMAND_NO_REPLY, 0, 0, EV3CommandOpCode.OP_UI_WRITE);
