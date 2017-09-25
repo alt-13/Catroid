@@ -22,13 +22,10 @@
  */
 package org.catrobat.catroid.content.actions;
 
-import com.badlogic.gdx.scenes.scene2d.actions.TemporalAction;
 import org.catrobat.catroid.bluetooth.base.BluetoothDevice;
 import org.catrobat.catroid.bluetooth.base.BluetoothDeviceService;
 import org.catrobat.catroid.common.CatroidService;
-import org.catrobat.catroid.common.LookData;
 import org.catrobat.catroid.common.ServiceProvider;
-import org.catrobat.catroid.content.bricks.SetLookBrick;
 import org.catrobat.catroid.devices.mindstorms.ev3.LegoEV3;
 
 public class LegoEv3ShowImageAction extends SetLookAction {
@@ -45,6 +42,21 @@ public class LegoEv3ShowImageAction extends SetLookAction {
 		return data;
 	}
 
+	public String toHexString(byte[] rawBytes) { // TODO Delete
+		String commandHexString = "0x";
+
+		if (rawBytes.length == 0) {
+			return "null";
+		}
+
+		for (int i = 0; i < rawBytes.length; i++) {
+			commandHexString += String.format("%02X", rawBytes[i] & 0xFF);
+			commandHexString += "_";
+		}
+
+		return commandHexString;
+	}
+
 	@Override
 	protected void doLookUpdate() {
 		LegoEV3 ev3 = btService.getDevice(BluetoothDevice.LEGO_EV3);
@@ -56,7 +68,9 @@ public class LegoEv3ShowImageAction extends SetLookAction {
 			if (fileName != null) {
 				String programName = ev3.downloadFileToEv3(ev3.EV3_SHOW_IMAGE_PROGRAM_NAME,
 						hexStringToByteArray(ev3.EV3_SHOW_IMAGE_PROGRAM));
-				ev3.downloadFileToEv3(fileName);
+//				ev3.downloadFileToEv3(fileName);
+//				Log.d("ALT_D", toHexString(rgf));
+				ev3.downloadFileToEv3(ev3.EV3_IMAGE_NAME, look.getLookRgf());
 				ev3.startProgram(programName);
 			}
 			setLookDone = true;

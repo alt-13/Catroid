@@ -46,7 +46,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.utils.StringBuilder;
 
 import org.catrobat.catroid.ProjectManager;
 import org.catrobat.catroid.R;
@@ -58,6 +57,7 @@ import org.catrobat.catroid.content.Sprite;
 import org.catrobat.catroid.io.StorageHandler;
 import org.catrobat.catroid.ui.LookViewHolder;
 import org.catrobat.catroid.ui.ScriptActivity;
+import org.catrobat.catroid.ui.SettingsActivity;
 import org.catrobat.catroid.ui.adapter.LookBaseAdapter;
 import org.catrobat.catroid.ui.dialogs.CustomAlertDialogBuilder;
 import org.catrobat.catroid.ui.fragment.LookFragment;
@@ -320,13 +320,9 @@ public final class LookController {
 	private void copyImageToCatroid(String originalImagePath, Activity activity, List<LookData> lookDataList,
 			LookFragment fragment) {
 		try {
-			boolean legoImage = originalImagePath.substring(originalImagePath.lastIndexOf('.')+1,
-					originalImagePath.length()).equals("rgf");
-			Log.d("ALT_D","imagePath: " + originalImagePath);
-			// TODO: get image dimensions from file
+			boolean lego = SettingsActivity.isMindstormsEV3SharedPreferenceEnabled(activity);
 			int[] imageDimensions = ImageEditing.getImageDimensions(originalImagePath);
-			// TODO: Quickfix for rgf image integration
-			if ((imageDimensions[0] < 0 || imageDimensions[1] < 0) && !legoImage) {
+			if ((imageDimensions[0] < 0 || imageDimensions[1] < 0)) {
 				Log.e(TAG, "Error loading image in copyImageToCatroid imageDimensions");
 				Utils.showErrorDialog(activity, R.string.error_load_image);
 				return;
@@ -353,12 +349,7 @@ public final class LookController {
 			String imageFileName = imageFile.getName();
 			// if pixmap cannot be created, image would throw an Exception in stage
 			// so has to be loaded again with other Config
-			Pixmap pixmap = Utils.getPixmapFromFile(imageFile, legoImage);
-//			if (legoImage) {
-//				pixmap = new Pixmap(10, 10, Pixmap.Format.RGB888);
-//			} else {
-//				pixmap = Utils.getPixmapFromFile(imageFile, legoImage);
-//			}
+			Pixmap pixmap = Utils.getPixmapFromFile(imageFile);
 
 			if (pixmap == null) {
 				ImageEditing.overwriteImageFileWithNewBitmap(imageFile);
@@ -371,8 +362,8 @@ public final class LookController {
 					return;
 				}
 			}
-			updateLookAdapter(imageName, imageFileName, lookDataList, fragment, (legoImage ? LookDataType
-					.LEGO_LOOK_DATA : LookDataType.LOOK_DATA));
+			updateLookAdapter(imageName, imageFileName, lookDataList, fragment, lego ? LookDataType.LEGO_LOOK_DATA :
+					LookDataType.LOOK_DATA);
 		} catch (IOException e) {
 			Log.e(TAG, "Error loading image in copyImageToCatroid IOException");
 			Utils.showErrorDialog(activity, R.string.error_load_image);

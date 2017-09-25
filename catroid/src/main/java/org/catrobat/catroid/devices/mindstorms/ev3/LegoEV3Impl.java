@@ -258,7 +258,7 @@ public class LegoEV3Impl implements LegoEV3, EV3SensorService.OnSensorChangedLis
 	public String downloadFileToEv3(String fileNameWithPath) {
 		File file = new File(Uri.parse(fileNameWithPath).getPath());
 		byte[] payload = {};
-		try { // TODO: big file -> out of mem?
+		try {
 			if (file.length() > MAX_LEGO_FILE_SIZE) {
 				throw new IOException("File too big");
 			}

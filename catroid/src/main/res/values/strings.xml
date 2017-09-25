@@ -1124,6 +1124,7 @@
     <string name="ev3_led_status_orange_pulse">Orange pulse</string>
 
     <string name="ev3_show_image">Show image on EV3</string>
+    <string name="ev3_image_contrast_dialog_title">Change contrast</string>
     <!--  -->
 
 

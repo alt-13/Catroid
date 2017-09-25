@@ -262,4 +262,11 @@ public class LookData implements Serializable, Cloneable {
 		}
 		return collisionInformation;
 	}
+
+	public void setLookRgf(byte[] rgf) {
+	}
+
+	public byte[] getLookRgf() {
+		return null;
+	}
 }

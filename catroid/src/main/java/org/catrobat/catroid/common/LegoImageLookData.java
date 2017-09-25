@@ -22,6 +22,9 @@
  */
 package org.catrobat.catroid.common;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.util.Log;
 
 import com.badlogic.gdx.Gdx;
@@ -33,28 +36,23 @@ import com.parrot.freeflight.ui.gl.GLBGVideoSprite;
 
 import org.catrobat.catroid.ProjectManager;
 import org.catrobat.catroid.content.bricks.Brick;
-import org.catrobat.catroid.utils.Utils;
+import org.catrobat.catroid.utils.ImageEditing;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 
 public class LegoImageLookData extends LookData {
 
 	private static final String TAG = LegoImageLookData.class.getSimpleName();
 
-	private transient int[] imageSize;
-	private transient boolean rgfFormat;
-
-	public LegoImageLookData() {
-		rgfFormat = true;
-	}
+	private byte[] rgf;
 
 	@Override
 	public LegoImageLookData clone() {
-		LegoImageLookData cloneImageLookData = new LegoImageLookData();
+		LegoImageLookData clonedLookData = new LegoImageLookData();
 
-		cloneImageLookData.name = this.name;
-		cloneImageLookData.fileName = this.fileName;
+		clonedLookData.name = this.name;
+		clonedLookData.fileName = this.fileName;
+		clonedLookData.rgf = this.rgf;
 		String filePath = getPathToImageDirectory() + "/" + fileName;
 		try {
 			ProjectManager.getInstance().getFileChecksumContainer().incrementUsage(filePath);
@@ -62,20 +60,16 @@ public class LegoImageLookData extends LookData {
 			Log.e(TAG, Log.getStackTraceString(fileNotFoundexception));
 		}
 
-		return cloneImageLookData;
+		return clonedLookData;
 	}
 
 	@Override
-	public int[] getMeasure() {
-		return imageSize.clone();
+	public byte[] getLookRgf() {
+		return rgf;
 	}
 
 	@Override
-	public Pixmap getPixmap() {
-		if (pixmap == null) {
-			pixmap = Utils.getPixmapFromFile(new File(getAbsolutePath()), true);
-		}
-		imageSize = new int[] {pixmap.getHeight(), pixmap.getWidth()};
-		return pixmap;
+	public void setLookRgf(byte[] rgf) {
+		this.rgf = rgf;
 	}
 }

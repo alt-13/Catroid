@@ -827,44 +827,6 @@ public final class Utils {
 		return newTitle;
 	}
 
-	public static Pixmap getPixmapFromFile(File imageFile, boolean legoImage) {
-		if (!legoImage) {
-			return getPixmapFromFile(imageFile);
-		}
-		byte[] fileContent = {};
-		int MAX_LEGO_IMAGE_SIZE = 3072;
-		try {
-			if (imageFile.length() > MAX_LEGO_IMAGE_SIZE) {
-				throw new IOException("Invalid Lego image file.");
-			}
-			fileContent = new byte[(int) imageFile.length()];
-			BufferedInputStream bufferIS = new BufferedInputStream(new FileInputStream(imageFile));
-			DataInputStream dataIS = new DataInputStream(bufferIS);
-			dataIS.readFully(fileContent);
-			if (fileContent.length < 3) {
-				throw new IOException("Invalid Lego image file.");
-			}
-		} catch (IOException e) {
-			Log.e(TAG, e.getMessage());
-		}
-		int height = (fileContent[1] & 0xFF);
-		int width = (fileContent.length-2)*8/height; // in some .rgf files the width is wrong (>178)
-		Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
-		int x = 0, y = 0;
-		for (int cbyte = 2; cbyte < fileContent.length; cbyte++) {
-			for (int bit = 0; bit < 8; bit++) {
-				pixmap.drawPixel(x, y, ((fileContent[cbyte] >> bit) & 0x1) == 0x0 ? 0xFFFFFFFF : 0x000000FF);
-				x++;
-				if (x % width == 0) {
-					y++;
-					x = 0;
-				}
-			}
-		}
-		pixmap.setBlending(Pixmap.Blending.None);
-		return pixmap;
-	}
-
 	public static Pixmap getPixmapFromFile(File imageFile) {
 		Pixmap pixmap;
 		try {

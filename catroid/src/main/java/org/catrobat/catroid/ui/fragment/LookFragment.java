@@ -560,14 +560,14 @@ public class LookFragment extends ScriptActivityFragment implements LookBaseAdap
 		startActivityForResult(intent, LookController.REQUEST_SELECT_OR_DRAW_IMAGE);
 	}
 
-	public void addLookChooseImage(String action, String mimeType) {
-		Intent intent = new Intent(action);
+	public void addLookChooseImage() {
+		Intent intent = new Intent(Intent.ACTION_PICK);
 
 		Bundle bundleForPocketCode = new Bundle();
 		bundleForPocketCode.putString(Constants.EXTRA_PICTURE_PATH_POCKET_PAINT, "");
 		bundleForPocketCode.putString(Constants.EXTRA_PICTURE_NAME_POCKET_PAINT, getString(R.string.default_look_name));
 
-		intent.setType(mimeType);
+		intent.setType("image/*");
 		intent.putExtras(bundleForPocketCode);
 
 		Intent chooser = Intent.createChooser(intent, getString(R.string.select_look_from_gallery));
